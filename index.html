@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DemoB — Bot WhatsApp · DigitAImind</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #E07B3A;
+    --orange-light: #F08C50;
+    --teal: #1c3a3a;
+    --teal-mid: #254e4e;
+    --off-white: #FAF8F5;
+    --wa-bg: #0d2626;
+    --bubble-in: #1e4545;
+    --text-muted: rgba(250,248,245,0.5);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Nunito',sans-serif;
+    background:var(--teal);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:24px 20px;
+    overflow-x:hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; top:-200px; left:50%; transform:translateX(-50%);
+    width:700px; height:700px;
+    background:radial-gradient(circle, rgba(224,123,58,0.1) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* Brand */
+  .brand-header {
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:22px; z-index:1;
+    animation:fadeDown 0.6s ease both;
+  }
+  .logo-mark {
+    width:38px; height:38px; border-radius:50%;
+    background:conic-gradient(from 200deg, #E07B3A 0%, #1c3a3a 40%, #081a1a 65%, #E07B3A 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 18px rgba(224,123,58,0.4);
+    font-size:13px; font-weight:900; color:white;
+  }
+  .brand-name { font-size:15px; font-weight:800; color:var(--off-white); letter-spacing:0.02em; }
+  .demo-pill {
+    background:var(--orange); color:white;
+    font-size:10px; font-weight:800;
+    padding:3px 10px; border-radius:20px;
+    text-transform:uppercase; letter-spacing:0.1em;
+    animation:pulsePill 2.5s infinite;
+  }
+  @keyframes pulsePill {
+    0%,100% { box-shadow:0 0 0 0 rgba(224,123,58,0.5); }
+    50% { box-shadow:0 0 0 7px rgba(224,123,58,0); }
+  }
+
+  /* Phone */
+  .phone-wrap { z-index:1; animation:fadeUp 0.8s ease 0.2s both; }
+  .phone-frame {
+    width:375px; background:#060f0f;
+    border-radius:50px; padding:14px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.07),
+      0 60px 120px rgba(0,0,0,0.75),
+      0 0 60px rgba(224,123,58,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .phone-inner {
+    border-radius:38px; overflow:hidden;
+    height:740px; display:flex; flex-direction:column;
+    background:var(--wa-bg);
+  }
+
+  /* Status bar */
+  .status-bar {
+    background:var(--teal);
+    padding:10px 22px 5px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11.5px; font-weight:700; color:var(--off-white);
+  }
+  .status-icons { display:flex; gap:6px; align-items:center; font-size:13px; }
+
+  /* Header */
+  .chat-header {
+    background:var(--teal);
+    padding:8px 14px 12px;
+    display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  .back-arrow { color:rgba(250,248,245,0.65); font-size:20px; cursor:pointer; font-weight:300; }
+  .bot-avatar {
+    width:42px; height:42px; border-radius:50%; flex-shrink:0;
+    background:conic-gradient(from 200deg, #E07B3A 0%, #1c3a3a 40%, #081a1a 65%, #E07B3A 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:900; color:white;
+    box-shadow:0 0 14px rgba(224,123,58,0.35);
+    position:relative;
+  }
+  .online-ring {
+    position:absolute; bottom:1px; right:1px;
+    width:11px; height:11px; border-radius:50%;
+    background:#2ecc71; border:2.5px solid var(--teal);
+    animation:blink 2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+  .contact-info h3 { font-size:15px; font-weight:800; color:var(--off-white); line-height:1.2; }
+  .contact-info p { font-size:11px; color:rgba(250,248,245,0.55); display:flex; align-items:center; gap:4px; }
+  .contact-info p::before { content:'●'; color:#2ecc71; font-size:7px; }
+  .header-icons { margin-left:auto; display:flex; gap:16px; color:rgba(250,248,245,0.65); font-size:17px; cursor:pointer; }
+
+  /* Messages */
+  .chat-messages {
+    flex:1; overflow-y:auto;
+    padding:14px 11px; display:flex; flex-direction:column; gap:5px;
+    scroll-behavior:smooth;
+    background:
+      radial-gradient(ellipse at 15% 85%, rgba(28,58,58,0.5) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 15%, rgba(224,123,58,0.04) 0%, transparent 45%),
+      var(--wa-bg);
+  }
+  .chat-messages::-webkit-scrollbar { width:2px; }
+  .chat-messages::-webkit-scrollbar-thumb { background:rgba(224,123,58,0.25); border-radius:10px; }
+
+  .date-chip { text-align:center; margin:6px 0; }
+  .date-chip span {
+    background:rgba(255,255,255,0.05); color:rgba(250,248,245,0.4);
+    font-size:10px; font-weight:700; padding:4px 12px; border-radius:20px; letter-spacing:0.08em;
+  }
+
+  .msg { display:flex; flex-direction:column; max-width:80%; animation:msgIn 0.28s ease both; }
+  @keyframes msgIn { from{opacity:0;transform:translateY(6px) scale(0.97);} to{opacity:1;transform:none;} }
+  .msg.bot { align-self:flex-start; }
+  .msg.user { align-self:flex-end; }
+
+  .msg-bubble {
+    padding:9px 13px; border-radius:18px;
+    font-size:13.5px; line-height:1.5; word-break:break-word;
+  }
+  .msg.bot .msg-bubble {
+    background:var(--bubble-in); color:var(--off-white);
+    border-bottom-left-radius:4px;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  .msg.user .msg-bubble {
+    background:var(--orange); color:white;
+    border-bottom-right-radius:4px;
+  }
+
+  .msg-time { font-size:9.5px; color:var(--text-muted); margin-top:3px; display:flex; align-items:center; gap:3px; }
+  .msg.user .msg-time { align-self:flex-end; }
+  .msg.bot .msg-time { align-self:flex-start; }
+  .tick { color:#67d5f7; font-size:11px; }
+
+  /* Quick replies */
+  .quick-replies { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .qr-chip {
+    background:transparent; border:1.5px solid var(--orange);
+    color:var(--orange); font-family:'Nunito',sans-serif;
+    font-size:12px; font-weight:700; padding:5px 13px;
+    border-radius:20px; cursor:pointer; transition:all 0.18s;
+  }
+  .qr-chip:hover { background:var(--orange); color:white; transform:translateY(-1px); }
+
+  /* Typing */
+  .typing-indicator {
+    display:none; align-self:flex-start;
+    background:var(--bubble-in); border:1px solid rgba(255,255,255,0.05);
+    padding:10px 15px; border-radius:18px; border-bottom-left-radius:4px;
+    gap:5px; align-items:center;
+  }
+  .typing-indicator.on { display:flex; }
+  .dot {
+    width:7px; height:7px; background:rgba(250,248,245,0.45);
+    border-radius:50%; animation:bounce 1.1s infinite;
+  }
+  .dot:nth-child(2) { animation-delay:0.18s; }
+  .dot:nth-child(3) { animation-delay:0.36s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-5px);} }
+
+  /* Input */
+  .input-area {
+    background:var(--teal);
+    padding:10px 11px;
+    display:flex; align-items:center; gap:8px;
+    border-top:1px solid rgba(255,255,255,0.05);
+  }
+  .input-wrap {
+    flex:1; background:var(--teal-mid); border-radius:24px;
+    display:flex; align-items:center; padding:8px 14px; gap:10px;
+    border:1px solid rgba(255,255,255,0.07);
+  }
+  .emoji-btn { font-size:17px; cursor:pointer; opacity:0.65; }
+  #user-input {
+    flex:1; background:transparent; border:none; outline:none;
+    font-family:'Nunito',sans-serif; font-size:14px; color:var(--off-white);
+  }
+  #user-input::placeholder { color:var(--text-muted); }
+  .send-btn {
+    width:44px; height:44px; border-radius:50%;
+    background:var(--orange); border:none; color:white;
+    font-size:17px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.18s;
+    box-shadow:0 4px 16px rgba(224,123,58,0.4);
+    flex-shrink:0;
+  }
+  .send-btn:hover { background:var(--orange-light); transform:scale(1.06); }
+  .send-btn:active { transform:scale(0.94); }
+
+  /* Footer */
+  .footer-caption { z-index:1; margin-top:18px; text-align:center; animation:fadeUp 0.8s ease 0.9s both; }
+  .footer-caption p { font-size:11px; color:rgba(250,248,245,0.3); font-weight:500; letter-spacing:0.04em; }
+  .footer-caption strong { color:var(--orange); }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-14px);} to{opacity:1;transform:none;} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:none;} }
+</style>
+</head>
+<body>
+
+<div class="brand-header">
+  <div class="logo-mark">D</div>
+  <span class="brand-name">DigitAImind</span>
+  <span class="demo-pill">● Live Demo</span>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone-frame">
+    <div class="phone-inner">
+
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-icons"><span>▲▲▲</span><span>📶</span><span>🔋</span></div>
+      </div>
+
+      <div class="chat-header">
+        <span class="back-arrow">‹</span>
+        <div class="bot-avatar">D<div class="online-ring"></div></div>
+        <div class="contact-info">
+          <h3>DemoB Salón 🤖</h3>
+          <p>en línea ahora</p>
+        </div>
+        <div class="header-icons"><span>📞</span><span>⋮</span></div>
+      </div>
+
+      <div class="chat-messages" id="chat">
+        <div class="date-chip"><span>HOY</span></div>
+
+        <div class="msg bot">
+          <div class="msg-bubble">
+            ¡Hola! 👋 Soy el asistente de <strong>DemoB Salón</strong>.<br><br>
+            Estoy aquí para ayudarte con citas, precios y servicios. ¿En qué te puedo ayudar?
+          </div>
+          <span class="msg-time">9:41</span>
+          <div class="quick-replies">
+            <button class="qr-chip" onclick="sendQuick('Quiero reservar una cita')">📅 Reservar cita</button>
+            <button class="qr-chip" onclick="sendQuick('¿Qué servicios ofrecéis?')">💇 Servicios</button>
+            <button class="qr-chip" onclick="sendQuick('¿Cuáles son los precios?')">💰 Precios</button>
+            <button class="qr-chip" onclick="sendQuick('¿Cuál es el horario?')">🕐 Horario</button>
+          </div>
+        </div>
+
+        <div class="typing-indicator" id="typing">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-wrap">
+          <span class="emoji-btn">😊</span>
+          <input type="text" id="user-input" placeholder="Escribe un mensaje..."
+            onkeydown="if(event.key==='Enter')sendMessage()" autocomplete="off">
+        </div>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="footer-caption">
+  <p>Impulsado por <strong>DigitAImind</strong> · Asistente IA para salones de belleza</p>
+</div>
+
+<script>
+const SYSTEM = `Eres el asistente virtual de WhatsApp de "DemoB Salón", un salón de belleza moderno en España.
+
+SERVICIOS Y PRECIOS:
+- Corte mujer: 25€ | Corte hombre: 15€
+- Tinte completo: 60-90€ según longitud
+- Mechas/balayage: 80-150€
+- Alisado japonés: 120-180€
+- Manicura: 20€ | Pedicura: 30€
+- Keratina: 80€ | Extensiones uñas: 45€
+
+HORARIOS: Lunes-Viernes 9:00-20:00 | Sábados 9:00-18:00 | Domingos cerrado
+
+CITAS: Reserva con 24h antelación. Cancelar con mínimo 2h de aviso.
+
+INSTRUCCIONES:
+- Responde SIEMPRE en español
+- Sé amable, cercano y profesional
+- Respuestas CORTAS (máx 3-4 líneas), usa emojis con moderación
+- Para reservar cita: pide nombre, servicio, fecha y hora
+- Al confirmar cita: da referencia ficticia tipo #2847 y menciona que recibirán recordatorio 24h antes
+- No menciones que eres IA de Anthropic, solo eres el bot del salón`;
+
+let history = [];
+let loading = false;
+
+function getTime() {
+  const n = new Date();
+  return String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+
+function addMsg(text, role) {
+  const chat = document.getElementById('chat');
+  const typing = document.getElementById('typing');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.innerHTML = text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  const time = document.createElement('span');
+  time.className = 'msg-time';
+  time.innerHTML = role === 'user' ? `${getTime()} <span class="tick">✓✓</span>` : getTime();
+  div.appendChild(bubble);
+  div.appendChild(time);
+  chat.insertBefore(div, typing);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function setTyping(on) {
+  document.getElementById('typing').className = 'typing-indicator' + (on ? ' on' : '');
+  document.getElementById('chat').scrollTop = 99999;
+}
+
+async function callAI(msg) {
+  history.push({ role:'user', content:msg });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:SYSTEM,
+      messages:history
+    })
+  });
+  const data = await res.json();
+  const reply = data.content?.[0]?.text || 'Ha ocurrido un error. Inténtalo de nuevo.';
+  history.push({ role:'assistant', content:reply });
+  return reply;
+}
+
+async function sendMessage() {
+  if (loading) return;
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  loading = true;
+  addMsg(text, 'user');
+  setTyping(true);
+  try {
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
+    const reply = await callAI(text);
+    setTyping(false);
+    addMsg(reply, 'bot');
+  } catch(e) {
+    setTyping(false);
+    addMsg('Lo siento, ha ocurrido un error. Por favor inténtalo de nuevo 🙏', 'bot');
+  }
+  loading = false;
+}
+
+function sendQuick(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+}
+</script>
+</body>
+</html>
