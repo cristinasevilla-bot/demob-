@@ -6,12 +6,8 @@ app.use(express.json());
 app.use(express.static('.'));
 
 app.post('/chat', async (req, res) => {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
+ const res = await fetch('/chat', {
+  headers: { 'Content-Type': 'application/json' },
     },
     body: JSON.stringify(req.body)
   });
